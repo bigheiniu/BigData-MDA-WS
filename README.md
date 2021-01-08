@@ -1,4 +1,4 @@
-# Multi-Domain Fake News Classification
+# Multi-Source Domain Adaptation with Weak Supervision for Early Fake News Detection
 
 ### Dataset Location
 You can find the dataset at the appendix. 
