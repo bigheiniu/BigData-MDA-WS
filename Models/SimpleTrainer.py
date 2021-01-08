@@ -2,8 +2,6 @@ import pytorch_lightning as pl
 from transformers import RobertaTokenizer, RobertaModel, RobertaConfig
 import torch
 import torch.nn as nn
-from Models import LSTMAttn_Text, CNN_Text, Defend_Text
-import pandas as pd
 from Util import data_split, evaluation
 import numpy as np
 from Dataset import TextDataset, CommenetDataset
