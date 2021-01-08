@@ -1,0 +1,2 @@
+# from .dataset import TextDataset, CommenetDataset, SimpleTextDataset, AdvTextDataset, EANNTextDataset
+from .dataset import TextDataset, CommenetDataset, SimpleTextDataset, AdvTextDataset, EANNTextDataset

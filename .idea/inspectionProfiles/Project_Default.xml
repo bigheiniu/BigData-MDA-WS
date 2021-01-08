@@ -1,0 +1,78 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="65">
+            <item index="0" class="java.lang.String" itemvalue="transformers" />
+            <item index="1" class="java.lang.String" itemvalue="simpletransformers" />
+            <item index="2" class="java.lang.String" itemvalue="xgboost" />
+            <item index="3" class="java.lang.String" itemvalue="tweepy" />
+            <item index="4" class="java.lang.String" itemvalue="pandas" />
+            <item index="5" class="java.lang.String" itemvalue="pytorch-lightning" />
+            <item index="6" class="java.lang.String" itemvalue="spacy" />
+            <item index="7" class="java.lang.String" itemvalue="scikit-learn" />
+            <item index="8" class="java.lang.String" itemvalue="torch" />
+            <item index="9" class="java.lang.String" itemvalue="dateparser" />
+            <item index="10" class="java.lang.String" itemvalue="numpy" />
+            <item index="11" class="java.lang.String" itemvalue="ray" />
+            <item index="12" class="java.lang.String" itemvalue="pyyaml" />
+            <item index="13" class="java.lang.String" itemvalue="tqdm" />
+            <item index="14" class="java.lang.String" itemvalue="fasttext" />
+            <item index="15" class="java.lang.String" itemvalue="ipdb" />
+            <item index="16" class="java.lang.String" itemvalue="krippendorff" />
+            <item index="17" class="java.lang.String" itemvalue="matplotlib" />
+            <item index="18" class="java.lang.String" itemvalue="wandb" />
+            <item index="19" class="java.lang.String" itemvalue="ipython" />
+            <item index="20" class="java.lang.String" itemvalue="torchvision" />
+            <item index="21" class="java.lang.String" itemvalue="arxiv" />
+            <item index="22" class="java.lang.String" itemvalue="praw" />
+            <item index="23" class="java.lang.String" itemvalue="Pillow" />
+            <item index="24" class="java.lang.String" itemvalue="archiveis" />
+            <item index="25" class="java.lang.String" itemvalue="ax-platform" />
+            <item index="26" class="java.lang.String" itemvalue="absl-py" />
+            <item index="27" class="java.lang.String" itemvalue="protobuf" />
+            <item index="28" class="java.lang.String" itemvalue="bs4" />
+            <item index="29" class="java.lang.String" itemvalue="pytrends" />
+            <item index="30" class="java.lang.String" itemvalue="html5lib" />
+            <item index="31" class="java.lang.String" itemvalue="nltk" />
+            <item index="32" class="java.lang.String" itemvalue="PyYAML" />
+            <item index="33" class="java.lang.String" itemvalue="python-dateutil" />
+            <item index="34" class="java.lang.String" itemvalue="urlextract" />
+            <item index="35" class="java.lang.String" itemvalue="gast" />
+            <item index="36" class="java.lang.String" itemvalue="requests" />
+            <item index="37" class="java.lang.String" itemvalue="feedparser" />
+            <item index="38" class="java.lang.String" itemvalue="requests-oauthlib" />
+            <item index="39" class="java.lang.String" itemvalue="twitter" />
+            <item index="40" class="java.lang.String" itemvalue="selenium" />
+            <item index="41" class="java.lang.String" itemvalue="twitter-text-python" />
+            <item index="42" class="java.lang.String" itemvalue="bleach" />
+            <item index="43" class="java.lang.String" itemvalue="certifi" />
+            <item index="44" class="java.lang.String" itemvalue="oauthlib" />
+            <item index="45" class="java.lang.String" itemvalue="lxml" />
+            <item index="46" class="java.lang.String" itemvalue="tldextract" />
+            <item index="47" class="java.lang.String" itemvalue="urllib3" />
+            <item index="48" class="java.lang.String" itemvalue="uritools" />
+            <item index="49" class="java.lang.String" itemvalue="Markdown" />
+            <item index="50" class="java.lang.String" itemvalue="bson" />
+            <item index="51" class="java.lang.String" itemvalue="beautifulsoup4" />
+            <item index="52" class="java.lang.String" itemvalue="coverage" />
+            <item index="53" class="java.lang.String" itemvalue="six" />
+            <item index="54" class="java.lang.String" itemvalue="Werkzeug" />
+            <item index="55" class="java.lang.String" itemvalue="astor" />
+            <item index="56" class="java.lang.String" itemvalue="twython" />
+            <item index="57" class="java.lang.String" itemvalue="termcolor" />
+            <item index="58" class="java.lang.String" itemvalue="twarc" />
+            <item index="59" class="java.lang.String" itemvalue="configparser" />
+            <item index="60" class="java.lang.String" itemvalue="cssselect" />
+            <item index="61" class="java.lang.String" itemvalue="requests-file" />
+            <item index="62" class="java.lang.String" itemvalue="grpcio" />
+            <item index="63" class="java.lang.String" itemvalue="pytz" />
+            <item index="64" class="java.lang.String" itemvalue="idna" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

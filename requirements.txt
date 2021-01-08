@@ -1,0 +1,17 @@
+scikit-learn
+pandas
+numpy
+torch
+transformers==2.11.0
+simpletransformers==0.34.2
+xgboost
+ray
+ray[tune]
+pytorch-lightning
+spacy
+dateparser
+pyyaml
+datefinder
+tweet-preprocessor
+ax-platform
+sqlalchemy
