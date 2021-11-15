@@ -1,56 +1,20 @@
 import pytorch_lightning as pl
-from transformers import RobertaTokenizer, RobertaModel, RobertaConfig
 import torch
 import torch.nn as nn
-from Models import LSTMAttn_Text, CNN_Text, Defend_Text
 import pandas as pd
-from Util import data_split, evaluation
+from Util import  evaluation
 import numpy as np
-from Dataset import TextDataset, CommenetDataset
+from Dataset import CommenetDataset
 from Dataset import AdvTextDataset, EANNTextDataset
-from transformers import AutoConfig, AutoModel, AutoTokenizer, RobertaForSequenceClassification
 from Models.TextTrainer import TextClf
 from Models.SimpleTrainer import SimpleTrainer
 from Models.DomainClf import DomainClf
-from Models.DistributionDistance import LabelDD
 from itertools import chain
 from Models.Layers import ReverseLayerF
 from argparse import ArgumentParser
 # from Models.l2w import step_l2w_group_net
 import math
-from torch.optim import Optimizer
-from Models.AdvsarialTrainer import AdTextClf
 
-
-class GroupWeightModel(nn.Module):
-    def __init__(self, n_groups):
-        super(GroupWeightModel, self).__init__()
-        self.n_groups = n_groups
-        # weight for each groups
-        self.pesu_group_weight = nn.Embedding(self.n_groups, embedding_dim=1)
-        # self.pesu_group_weight = nn.Parameter(torch.randn(1, self.n_groups), requires_grad=True)
-
-
-    def forward(self, item_loss, iw, domain_y):
-        '''
-
-        Args:
-            item_loss: shape is [batchsize * 3, ].
-            e.g [item1_weak1_loss,
-                item1_weak2_loss,
-                item1_weak3_loss,
-                ....
-            ]
-            iw:
-
-        Returns:
-
-        '''
-
-        group_weight = torch.sigmoid(self.pesu_group_weight(domain_y))
-        final_weight = torch.matmul(iw.view(-1, 1), group_weight)
-
-        return (final_weight * (item_loss.view(final_weight.shape))).sum()
 
 
 class FullWeightModel(nn.Module):
@@ -125,9 +89,9 @@ class SimpleGroupWeight(nn.Module):
 
 domain_map = {"gossip":0,"politi":1, "health_deterrent":2}
 
-class MetaClf(SimpleTrainer):
+class MDAWS(SimpleTrainer):
     def __init__(self, hparams, textClf_ckpt=None):
-        super(MetaClf, self).__init__(hparams)
+        super(MDAWS, self).__init__(hparams)
         self.hparams = hparams
         self.domain_adv = DomainClf(hparams)
         self.pre_train_epochs = hparams.pre_train_epochs
@@ -173,24 +137,6 @@ class MetaClf(SimpleTrainer):
         _, domain_loss = self.domain_adv(reverse_features, domain_y)
 
         return domain_loss
-
-    # def second_stage_(self, src_x=None, src_y=None, src_domain_y=None,
-    #             tgt_x=None, tgt_y=None, tgt_domain_y=None,
-    #             is_training=True):
-    #     outputs = self.TextClf.forward(x=tgt_x, y=None)
-    #     features = outputs[0]
-    #     expert_logits = [expert(features) for expert in self.classifiers]
-    #     weight = self.group_weight()
-    #     tgt_weighted_logits = torch.sum(weight * expert_logits)
-    #     clf_output = (features, tgt_weighted_logits)
-    #     if is_training:
-    #         rumor_loss = clf_output[2]
-    #         features = clf_output[1]
-    #         adv_domain_loss = self.adversarial_loss(features, domain_y)
-    #         loss = adv_domain_loss + rumor_loss
-    #         clf_output += (loss, rumor_loss, adv_domain_loss,)
-    #     return clf_output
-
 
     def first_stage(self, src_x=None, src_domain_y=None,
                                src_rumor_y=None, tgt_x=None, tgt_domain_y=None):
@@ -252,7 +198,6 @@ class MetaClf(SimpleTrainer):
 
                 mix_logits, expert_weight = self.group_weight(tgt_feature, expert_logits, tgt_domain_onehot)
 
-        # mix_logits = torch.sum(expert_logits, dim=1)
 
         loss = self.cross_entropy_loss(mix_logits, tgt_rumor_y)
         loss_first = self.hparams.hyper_beta * loss_first
@@ -297,25 +242,6 @@ class MetaClf(SimpleTrainer):
         # return {"loss": loss, "log": tensorboard_logs,"instance_weight": instance_weight}
         return {"loss": loss, "log": tensorboard_logs}
 
-    # def training_step(self, batch, batch_idx):
-    #     inputs = {"src_rumor_y": batch[0], "src_domain_y":batch[1], "src_x": batch[2],
-    #               "tgt_rumor_y": batch[3], 'tgt_x': batch[5], 'tgt_domain_y': batch[4]}
-    #
-    #     # weak labeled target samples
-    #     g_input = {"y": batch[3], 'x': batch[5], "domain_y": batch[4]}
-    #     # clean labeled source samples
-    #     s_input = {"y": batch[0], "x": batch[2], "domain_y": batch[1]}
-    #     train_input = {}
-    #
-    #     (main_opt, group_opt), (main_scheduler, group_scheduler) = self.optimizers()
-    #     if self.is_group_weight:
-    #         pass
-    #     else:
-    #         loss_g, loss_s, instance_weight = step_l2w_group_net(self, self.forward, main_opt, main_scheduler, g_input, s_input, train_input, self.hparams,
-    #                    self.group_weight, group_opt, group_scheduler, gold_ratio=len(train_input))
-    #     loss = loss_s + loss_g
-    #     tensorboard_logs = {"loss_s": loss_s, "loss_g":loss_g, "loss":loss}
-    #     return {"loss": loss, "log": tensorboard_logs,"instance_weight": instance_weight}
 
     def training_epoch_end(self, outputs):
         loss = np.mean([i['loss'].item() for i in outputs[0]])
@@ -452,22 +378,6 @@ class MetaClf(SimpleTrainer):
 
             lr=self.hparams.group_lr_rate
         )
-
-        # group_optimizer = torch.optim.Adam(
-        #     [{"params": filter(lambda p: p.requires_grad, chain(model.parameters(),
-        #                                             domain_adv.parameters(), classifier.parameters())),
-        #       "lr":self.hparams.group_lr_rate/100, "weight_decay": 1e-4
-        #       },
-        #      {"params": filter(lambda p: p.requires_grad, group_weight.parameters())}
-        #      ],
-        #
-        #     lr=self.hparams.group_lr_rate
-        # )
-
-        # group_optimizer = torch.optim.Adam(
-        #     filter(lambda p: p.requires_grad, chain(group_weight.parameters())),
-        #     lr=self.hparams.group_lr_rate
-        # )
 
         return [main_optimizer, group_optimizer]
 

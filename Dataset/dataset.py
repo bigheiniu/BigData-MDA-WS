@@ -31,7 +31,6 @@ def flip_label(labels, p=0.4):
 
 class SimpleTextDataset(torch.utils.data.Dataset):
     def __init__(self, hparams, type, is_tgt, tokenizer):
-        # file_name = "/home/yli29/FakeDetectionBaseline/data/simple_text.torch"
         self.hparams = hparams
         if hparams.clf_method == 'defend':
             file_name = "./data/simple_text_defend.torch"
@@ -221,8 +220,7 @@ class AdvTextDataset(torch.utils.data.Dataset):
     def __init__(self, hparams, type, tokenizer, weak_flag=False):
         super(AdvTextDataset, self).__init__()
         self.hparams = hparams
-        # file_name = "/home/yli29/FakeDetectionBaseline/data/simple_text.torch"
-        file_name = "/home/yli29/FakeDetectionBaseline/data/simple_text.torch"
+        file_name = "./data/simple_text.torch"
         if os.path.exists(file_name):
             data = torch.load(file_name)
             for key, value in data.items():
@@ -498,7 +496,7 @@ class EANNTextDataset(torch.utils.data.Dataset):
         super(EANNTextDataset, self).__init__()
         self.hparams = hparams
         if hparams.is_not_in:
-            file_name = "data/EANN_s:gossip,politi_t:health_deterrent.torch"
+            file_name = "./data/EANN_s:gossip,politi_t:health_deterrent.torch"
         else:
             if hparams.tgt_domain == "gossip" and hparams.src_domain == "health_deterrent,politi":
                 file_name = f"data/EANN_s:gossip,politi_t:health_deterrent.torch"
@@ -557,32 +555,10 @@ class EANNTextDataset(torch.utils.data.Dataset):
             src_labels = train_src_label
             tgt_features = []
             tgt_labels = []
-            # train_tgt_data_in, train_tgt_data_notin = self.get_weak_labels(train_tgt_data)
-            # if self.hparams.is_get_clean_data:
-            #     new_index = train_tgt_data_notin['index_new'].values.tolist()
-            #     zero_index = [i for i in new_index if train_tgt_label[i] == 0][:int(self.hparams.clean_count / 2)]
-            #     one_index = [i for i in new_index if train_tgt_label[i] == 1][:int(self.hparams.clean_count / 2)]
-            #     index = zero_index + one_index
-            #     train_tgt_data = pd.DataFrame(train_tgt_data, columns=['encoded_text', 'index', 'domain'])
-            #     select_data = train_tgt_data.iloc[index, :]
-            #
-            #     select_tgt_features = select_data[['encoded_text', 'domain']].values.tolist()
-            #     select_tgt_labels = [train_tgt_label[i] for i in index]
-            #     assert len(select_tgt_labels) == self.hparams.clean_count
-            #     assert len(select_tgt_features) == self.hparams.clean_count
-            #     if self.hparams.model_type != "new":
-            #         src_features += select_tgt_features
-            #         src_labels += select_tgt_labels
-            #     else:
-            #         tgt_features += select_tgt_features
-            #         tgt_labels += select_tgt_labels
-
 
             tgt_features += [[i[0], i[1]] for i in train_tgt_data]
             tgt_labels += train_tgt_label
-            # if self.hparams.is_flip_label:
-            #     src_features += tgt_features
-            #     src_labels += tgt_labels
+
         elif type == 'test':
            # Only tgt dataset for test
             src_features = test_tgt_data

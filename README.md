@@ -1,7 +1,12 @@
 # Multi-Source Domain Adaptation with Weak Supervision for Early Fake News Detection
 
 ### Dataset Location
-You can find the dataset at the appendix. 
+Download the dataset from [Google Drive](https://drive.google.com/drive/folders/1Yqd-C0fcepAdXLgkpVjpX-33j9uhQ4tI?usp=sharing).
+Untar the file by command: 
+```shell
+tar zxvf release_data.tar.gz
+mv release_data data
+```
 
 
 ### Install the requirement
@@ -15,7 +20,7 @@ mkdir "tb_logs"
 
 ### Usage
 ```shell script
-python --tgt_domain gossip \
+python adv_nn_clf.py --tgt_domain gossip \
 --src_domain politi,health_deterrent \
 --epochs 50 \
 --weak_labels_path ./data/weak_label_all.csv \

@@ -2,10 +2,9 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 import pandas as pd
-from Util import data_split, evaluation, set_random_seed
 from Models.AdvsarialTrainer import AdTextClf
 from Models.DDSTrainer import DDSTextClf
-from Models.MetaTrainer import MetaClf
+from Models.MDAWSTrainer import MDAWS
 # from run_in_one import build_args
 import argparse
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -32,15 +31,14 @@ def activate_model_init(hparams):
             checkpoint_path = None
         model = AdTextClf(hparams, textClf_ckpt=checkpoint_path)
     elif hparams.model_type == 'new':
-        model = MetaClf(hparams)
+        model = MDAWS(hparams)
     else:
         model = DDSTextClf(hparams)
     return model
 
 def nn_clf_method(method_name, parser):
     # set the random seed for each experiment
-    # parser = AdTextClf.add_model_specific_args(parser)
-    parser = MetaClf.add_model_specific_args(parser)
+    parser = MDAWS.add_model_specific_args(parser)
     hparams = parser.parse_args()
     print(hparams)
     if hparams.tgt_domain in hparams.src_domain:
@@ -81,33 +79,14 @@ def nn_clf_method(method_name, parser):
     trainer.test(model)
     # utilize the best model
     trainer.test(ckpt_path=checkpoint_callback.best_model_path)
-    # shutil.rmtree(logger.log_dir + "/checkpoints")
-    # for file in glob(""
-    #                  + 'tb_logs/'
-    #                  + hparams.model_type + "_" + method_name + tag + "s:{}-t:{}".format(hparams.src_domain,
-    #                                                                                      hparams.tgt_domain)
-    #                  + "/**/checkpoints"):
-    #     shutil.rmtree(file)
-
-
-def evaluate(method_name, parser):
-    parser = MetaClf.add_model_specific_args(parser)
-    hparams = parser.parse_args()
-    tag = "_eann_" if hparams.is_eann else ""
-
-    # checkpoint_path = glob(f"tb_logs/{method_name}s:{hparams.src_domain}-t:{hparams.src_domain}/version_0/checkpoints/*.ckpt")[0]
-    checkpoint_path = "/home/yli29/FakeDetectionBaseline/tb_logs/newweight_analysiscnnweight_analysiss:politi,health_deterrent-t:gossip/version_27/checkpoints/epoch=23.ckpt"
-    logger = TensorBoardLogger('tb_logs',
-                               name=method_name + tag + "s:{}-t:{}".format(hparams.src_domain, hparams.tgt_domain))
-    model = activate_model_init(hparams)
-    model = model.load_from_checkpoint(checkpoint_path,  hparams=hparams, model_name=method_name,textClf_ckpt=None)
-    model.hparams = hparams
-    trainer = pl.Trainer(
-        gpus=hparams.gpus,
-        logger=logger,
-        checkpoint_callback=False
-    )
-    trainer.test(model)
+    # remove the model checkpoint
+    shutil.rmtree(logger.log_dir + "/checkpoints")
+    for file in glob(""
+                     + 'tb_logs/'
+                     + hparams.model_type + "_" + method_name + tag + "s:{}-t:{}".format(hparams.src_domain,
+                                                                                         hparams.tgt_domain)
+                     + "/**/checkpoints"):
+        shutil.rmtree(file)
 
 
 
@@ -154,14 +133,8 @@ if __name__ == '__main__':
     nn_model_args.add_argument("--clean_count", default=10, type=int)
     nn_model_args.add_argument("--special_tag", default="", type=str)
 
-
-
-
-
-
     for method_name in ['cnn']:
         nn_clf_method(method_name, parser)
-        # evaluate(method_name, parser)
 
 
 

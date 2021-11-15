@@ -3,4 +3,4 @@ from .Trainer import TextClf
 from .TextTrainer import TextClf as SimpleTextClf
 from .AdvsarialTrainer import AdTextClf
 from .DDSTrainer import DDSTextClf
-from .MetaTrainer import MetaClf
+from .MetaTrainer import MDAWS
