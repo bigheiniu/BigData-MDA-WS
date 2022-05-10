@@ -220,7 +220,7 @@ class AdvTextDataset(torch.utils.data.Dataset):
     def __init__(self, hparams, type, tokenizer, weak_flag=False):
         super(AdvTextDataset, self).__init__()
         self.hparams = hparams
-        file_name = "./data/simple_text.torch"
+        file_name = "./data/simple_text_roberta.torch"
         if os.path.exists(file_name):
             data = torch.load(file_name)
             for key, value in data.items():
@@ -481,12 +481,12 @@ class AdvTextDataset(torch.utils.data.Dataset):
     def __getitem__(self, item):
         # return torch.tensor(self.labels[item], dtype=torch.long), torch.tensor(self.features[item], dtype=torch.long)
 
-        output = (torch.tensor(self.src_labels[item]), torch.tensor(self.src_domain[item]), torch.tensor(self.src_features[item]),
-        torch.tensor(self.tgt_labels[item]), torch.tensor(self.tgt_domain[item]), torch.tensor(self.tgt_features[item]), )
+        output = (torch.tensor(self.src_labels[item]), torch.tensor(self.src_domain[item]), torch.tensor(self.src_features[item][0]),
+        torch.tensor(self.tgt_labels[item]), torch.tensor(self.tgt_domain[item]), torch.tensor(self.tgt_features[item][0]), )
 
         if self.flag_no:
             output += (torch.tensor(self.tgt_no_labels[item]), torch.tensor(self.tgt_no_domain[item]),
-                       torch.tensor(self.tgt_no_features[item]),)
+                       torch.tensor(self.tgt_no_features[item][0]),)
 
 
         return output

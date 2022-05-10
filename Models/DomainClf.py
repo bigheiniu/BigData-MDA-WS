@@ -4,21 +4,21 @@ import torch.nn as nn
 class DomainClf(nn.Module):
     def __init__(self, hparams):
         super(DomainClf, self).__init__()
-        self.hparams = hparams
+        self.hparams1 = hparams
         self.domain_clf = nn.Sequential(
-            nn.Linear(self.hparams.hidden_size, self.hparams.domain_layer1),
+            nn.Linear(self.hparams1.hidden_size, self.hparams1.domain_layer1),
             nn.ReLU(),
-            nn.Linear(self.hparams.domain_layer1, self.hparams.domain_layer2),
-            nn.Linear(self.hparams.domain_layer2, self.hparams.domain_class)
+            nn.Linear(self.hparams1.domain_layer1, self.hparams1.domain_layer2),
+            nn.Linear(self.hparams1.domain_layer2, self.hparams1.domain_class)
         )
         self.cross_entropy = nn.CrossEntropyLoss()
         self.cross_entropy_seperate = nn.CrossEntropyLoss(reduction="none")
-        final_dim = (self.hparams.domain_class - 1) * 2
+        final_dim = (self.hparams1.domain_class - 1) * 2
         self.domain_logit_clf = nn.Sequential(
-            nn.Linear(self.hparams.hidden_size, self.hparams.domain_layer1),
+            nn.Linear(self.hparams1.hidden_size, self.hparams1.domain_layer1),
             nn.ReLU(),
-            nn.Linear(self.hparams.domain_layer1, self.hparams.domain_layer2),
-            nn.Linear(self.hparams.domain_layer2, final_dim)
+            nn.Linear(self.hparams1.domain_layer1, self.hparams1.domain_layer2),
+            nn.Linear(self.hparams1.domain_layer2, final_dim)
         )
 
     def set_source(self, target_class):

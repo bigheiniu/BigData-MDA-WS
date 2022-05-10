@@ -12,7 +12,7 @@ from transformers import AutoConfig, AutoModel, AutoTokenizer, RobertaForSequenc
 class SimpleTrainer(pl.LightningModule):
     def __init__(self, hparams):
         super(SimpleTrainer, self).__init__()
-        self.hparams = hparams
+        # self.hparams1 = hparams
 
     def forward(self, **inputs):
         return self.model(**inputs)
@@ -37,7 +37,7 @@ class SimpleTrainer(pl.LightningModule):
         ret, preds, targets = self._eval_end(outputs)
         logs = ret["log"]
         for key, value in logs.items():
-            # self.logger.experiment.add_scalar("Val/" + key + "_s:{}-t:{}".format(self.hparams.src_domain, self.hparams.tgt_domain),
+            # self.logger.experiment.add_scalar("Val/" + key + "_s:{}-t:{}".format(self.hparams1.src_domain, self.hparams1.tgt_domain),
             self.logger.experiment.add_scalar("Val/" + key,
                                               value, self.current_epoch)
         return {"val_loss": logs['loss'], "log": logs, 'val_acc': logs['acc']}
@@ -46,7 +46,7 @@ class SimpleTrainer(pl.LightningModule):
         ret, predictions, targets = self._eval_end(outputs)
         logs = ret["log"]
         for key, value in logs.items():
-            # self.logger.experiment.add_scalar("Test/" + key + "_s:{}-t:{}".format(self.hparams.src_domain, self.hparams.tgt_domain),
+            # self.logger.experiment.add_scalar("Test/" + key + "_s:{}-t:{}".format(self.hparams1.src_domain, self.hparams1.tgt_domain),
             self.logger.experiment.add_scalar("Test/" + key ,
                                               value, self.current_epoch)
         return {"avg_test_loss": 0, "log": logs}
@@ -63,15 +63,15 @@ class SimpleTrainer(pl.LightningModule):
 
 
     def get_loader(self, type):
-        if self.hparams.dataset == "text":
+        if self.hparams1.dataset == "text":
             dataset = SimpleTextDataset
-        elif self.hparams.dataset == "comment":
+        elif self.hparams1.dataset == "comment":
             dataset = CommenetDataset
         else:
             raise NotImplementedError
 
-        batch_size = self.hparams.train_batch_size
-        selected_dataset = dataset(self.hparams, type, self.tokenizer)
+        batch_size = self.hparams1.train_batch_size
+        selected_dataset = dataset(self.hparams1, type, self.tokenizer)
         dataloader = torch.utils.data.DataLoader(selected_dataset, batch_size=batch_size)
         return dataloader
 

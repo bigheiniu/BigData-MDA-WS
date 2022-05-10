@@ -2,7 +2,6 @@ import pytorch_lightning as pl
 from transformers import RobertaTokenizer, RobertaModel, RobertaConfig
 import torch
 import torch.nn as nn
-from Models import LSTMAttn_Text, CNN_Text, Defend_Text
 import pandas as pd
 from Util import data_split, evaluation
 import numpy as np
@@ -29,10 +28,10 @@ class AdTextClf(SimpleTrainer):
         else:
             self.TextClf = TextClf(hparams, model_name='cnn')
         self.hyper_lambda = hparams.hyper_lambda
-        self.hparams = hparams
-        if hasattr(self.hparams, "is_weak_label") is False:
+        self.hparams1 = hparams
+        if hasattr(self.hparams1, "is_weak_label") is False:
             self.label_weak = False
-        elif self.hparams.is_weak_label:
+        elif self.hparams1.is_weak_label:
             self.label_weak = True
         else:
             self.label_weak = False
@@ -139,24 +138,24 @@ class AdTextClf(SimpleTrainer):
                 "logits": tgt_logits, "target": labels}
 
     def get_loader(self, type):
-        batch_size = self.hparams.train_batch_size
+        batch_size = self.hparams1.train_batch_size
         selected_dataset = self.get_dataset(type)
         dataloader = torch.utils.data.DataLoader(selected_dataset, batch_size=batch_size)
         return dataloader
 
     def get_dataset(self, type):
-        if self.hparams.dataset == "text":
-            if self.hparams.is_eann:
+        if self.hparams1.dataset == "text":
+            if self.hparams1.is_eann:
                 dataset = EANNTextDataset
             else:
                 dataset = AdvTextDataset
-        elif self.hparams.dataset == "comment":
+        elif self.hparams1.dataset == "comment":
             dataset = CommenetDataset
         else:
             raise NotImplementedError
 
 
-        selected_dataset = dataset(self.hparams, type, tokenizer=None)
+        selected_dataset = dataset(self.hparams1, type, tokenizer=None)
         return selected_dataset
 
     def configure_optimizers(self):
@@ -164,7 +163,7 @@ class AdTextClf(SimpleTrainer):
         domain_adv = self.domain_adv
         main_optimizer = \
             torch.optim.Adam(filter(lambda p: p.requires_grad, chain(model.parameters(), domain_adv.parameters())),
-                             lr=self.hparams.lr_rate
+                             lr=self.hparams1.lr_rate
                              )
 
         return [main_optimizer]
@@ -190,4 +189,5 @@ class AdTextClf(SimpleTrainer):
         parser.add_argument('--lr_rate',  type=float, default=1e-3)
         parser.add_argument('--is_eann',  action="store_true")
         parser.add_argument('--is_weak_label',  action="store_true")
+        parser.add_argument('--hyper_lambda', type=float, default=0.5)
         return parser

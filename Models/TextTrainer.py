@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 from transformers import RobertaTokenizer, RobertaModel, RobertaConfig
 import torch
 import torch.nn as nn
-from Models import LSTMAttn_Text, CNN_Text, Defend_Text
+from Models.CNNModel import  CNN_Text
 import pandas as pd
 from Util import data_split, evaluation
 import numpy as np
@@ -16,7 +16,6 @@ class TextClf(pl.LightningModule):
         super(TextClf, self).__init__()
         if type(hparams) is dict:
             hparams = Namespace(**hparams)
-        self.hparams = hparams
         self.step_count = 0
         encoder_type = "roberta-base"
         roberta_config = AutoConfig.from_pretrained(encoder_type)
@@ -30,10 +29,6 @@ class TextClf(pl.LightningModule):
         self.model_name = model_name
         if model_name == "cnn":
             model = CNN_Text(hparams, embedding_weight=embedding_weight)
-        elif model_name == "lstm":
-            model = LSTMAttn_Text(hparams, embedding_weight=embedding_weight)
-        elif model_name == "defend":
-            model = Defend_Text(hparams, embedding_weight=embedding_weight)
         elif model_name == 'roberta':
             config = RobertaConfig.from_pretrained(encoder_type, num_labels=hparams.class_num)
             model = RobertaForSequenceClassification.from_pretrained(encoder_type, config=config)
@@ -86,7 +81,7 @@ class TextClf(pl.LightningModule):
         ret, preds, targets = self._eval_end(outputs)
         logs = ret["log"]
         for key, value in logs.items():
-            # self.logger.experiment.add_scalar("Val/" + key + "_s:{}-t:{}".format(self.hparams.src_domain, self.hparams.tgt_domain),
+            # self.logger.experiment.add_scalar("Val/" + key + "_s:{}-t:{}".format(self.hparams1.src_domain, self.hparams1.tgt_domain),
             self.logger.experiment.add_scalar("Val/" + key,
                                               value, self.current_epoch)
         return {"val_loss": logs["val_loss"], "log": logs}
@@ -95,7 +90,7 @@ class TextClf(pl.LightningModule):
         ret, predictions, targets = self._eval_end(outputs)
         logs = ret["log"]
         for key, value in logs.items():
-            # self.logger.experiment.add_scalar("Test/" + key + "_s:{}-t:{}".format(self.hparams.src_domain, self.hparams.tgt_domain),
+            # self.logger.experiment.add_scalar("Test/" + key + "_s:{}-t:{}".format(self.hparams1.src_domain, self.hparams1.tgt_domain),
             self.logger.experiment.add_scalar("Test/" + key ,
                                               value, self.current_epoch)
         return {"avg_test_loss": logs["val_loss"], "log": logs}
@@ -112,16 +107,16 @@ class TextClf(pl.LightningModule):
 
 
     def get_loader(self, type):
-        if self.hparams.dataset == "text":
+        if self.hparams1.dataset == "text":
             dataset = SimpleTextDataset
-        elif self.hparams.dataset == "comment":
+        elif self.hparams1.dataset == "comment":
             dataset = CommenetDataset
         else:
             raise NotImplementedError
 
-        batch_size = self.hparams.train_batch_size
+        batch_size = self.hparams1.train_batch_size
         is_tgt = False
-        selected_dataset = dataset(self.hparams, type, is_tgt,self.tokenizer)
+        selected_dataset = dataset(self.hparams1, type, is_tgt,self.tokenizer)
         dataloader = torch.utils.data.DataLoader(selected_dataset, batch_size=batch_size)
         return dataloader
 
@@ -134,7 +129,7 @@ class TextClf(pl.LightningModule):
         return dataloader
 
     def test_dataloader(self):
-        print("Load test dataset from {}".format(self.hparams.tgt_domain))
+        print("Load test dataset from {}".format(self.hparams1.tgt_domain))
         dataloader = self.get_loader(type="test")
         return dataloader
 

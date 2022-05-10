@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 from transformers import RobertaTokenizer, RobertaModel, RobertaConfig
 import torch
 import torch.nn as nn
-from Models import LSTMAttn_Text, CNN_Text, Defend_Text
+from Models.CNNModel import CNN_Text
 import pandas as pd
 from Util import data_split, evaluation
 import numpy as np
@@ -13,7 +13,7 @@ from transformers import AutoConfig, AutoModel, AutoTokenizer
 class TextClf(pl.LightningModule):
     def __init__(self, hparams, model_name):
         super(TextClf, self).__init__()
-        self.hparams = hparams
+        self.hparams1 = hparams
         self.step_count = 0
         roberta_config = AutoConfig.from_pretrained("xlm-roberta-base")
         self.tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
@@ -23,10 +23,6 @@ class TextClf(pl.LightningModule):
         self.model_name = model_name
         if model_name == "cnn":
             model = CNN_Text(hparams, embedding_weight=embedding_weight)
-        elif model_name == "lstm":
-            model = LSTMAttn_Text(hparams, embedding_weight=embedding_weight)
-        elif model_name == "defend":
-            model = Defend_Text(hparams, embedding_weight=embedding_weight)
         else:
             raise NotImplementedError
 
@@ -36,10 +32,7 @@ class TextClf(pl.LightningModule):
         return self.model(**inputs)
 
     def training_step(self, batch, batch_idx):
-        if self.model_name == "defend":
-            inputs = {"y": batch[0], "news_tokens":batch[2], "comments_tokens": batch[1]}
-        else:
-            inputs = {"y": batch[0], "x": batch[1]}
+        inputs = {"y": batch[0], "x": batch[1]}
         outputs = self(**inputs)
         loss = outputs[1]
         # eval_metrics = outputs[-1]
@@ -47,10 +40,8 @@ class TextClf(pl.LightningModule):
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, batch, batch_idx):
-        if self.model_name == "defend":
-            inputs = {"y": batch[0], "news_tokens": batch[2], "comments_tokens": batch[1]}
-        else:
-            inputs = {"y": batch[0], "x": batch[1]}
+
+        inputs = {"y": batch[0], "x": batch[1]}
         outputs = self(**inputs)
         logits = outputs[0]
         loss = outputs[1]
@@ -97,15 +88,15 @@ class TextClf(pl.LightningModule):
 
 
     def get_loader(self, type):
-        if self.hparams.dataset == "text":
+        if self.hparams1.dataset == "text":
             dataset = TextDataset
-        elif self.hparams.dataset == "comment":
+        elif self.hparams1.dataset == "comment":
             dataset = CommenetDataset
         else:
             raise NotImplementedError
 
-        batch_size = self.hparams.train_batch_size
-        train_dataset = dataset(self.hparams, type, self.tokenizer)
+        batch_size = self.hparams1.train_batch_size
+        train_dataset = dataset(self.hparams1, type, self.tokenizer)
         dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size)
         return dataloader
 

@@ -3,7 +3,6 @@ import torch.nn as nn
 import pytorch_lightning as pl
 import pandas as pd
 from Models.AdvsarialTrainer import AdTextClf
-from Models.DDSTrainer import DDSTextClf
 from Models.MDAWSTrainer import MDAWS
 # from run_in_one import build_args
 import argparse
@@ -33,7 +32,7 @@ def activate_model_init(hparams):
     elif hparams.model_type == 'new':
         model = MDAWS(hparams)
     else:
-        model = DDSTextClf(hparams)
+        raise NotImplementedError
     return model
 
 def nn_clf_method(method_name, parser):
@@ -71,7 +70,7 @@ def nn_clf_method(method_name, parser):
         logger=logger,
         # reload_dataloaders_every_epoch=True,
         callbacks=[checkpoint_callback],
-        automatic_optimization=flag
+        # automatic_optimization=flag
         # checkpoint_callback=ModelCheckpoint(monitor='val_loss', mode='min', filepath=logger.log_dir+"/checkpoints/{epoch:02d}-{val_loss:.2f}")
     )
     trainer.fit(model)

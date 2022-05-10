@@ -20,17 +20,18 @@ import math
 class FullWeightModel(nn.Module):
     def __init__(self, hparams, n_groups, hidden_size, tgt_domain,cls_emb=256, gw_hidden_dim=768):
         super(FullWeightModel, self).__init__()
+        self.automatic_optimization = hparams.model_type != "new"
         self.n_groups = n_groups
-        self.hparams = hparams
+        self.hparams1 = hparams
         self.cls_emb = cls_emb
         h_dim = gw_hidden_dim
         # self.domain_emb = nn.Embedding(self.n_groups, self.cls_emb)
         print("n groups {} emb {}".format(self.n_groups, self.cls_emb))
         self.domain_emb = nn.Embedding(self.n_groups, self.cls_emb, padding_idx=tgt_domain)
         hidden_size_input = hidden_size + 2 + self.cls_emb
-        if self.hparams.is_omit_domain_weight:
+        if self.hparams1.is_omit_domain_weight:
             hidden_size_input -= self.cls_emb
-        if self.hparams.is_omit_logits:
+        if self.hparams1.is_omit_logits:
             hidden_size_input -= 2
 
         self.ins_weight = nn.Sequential(
@@ -58,12 +59,12 @@ class FullWeightModel(nn.Module):
         domain = torch.tensor([list(range(self.n_groups))] * batch_size)
         domain = domain.to(tgt_feature.device)
         domain_weight = self.domain_emb(domain)
-        if self.hparams.is_omit_domain_weight is False:
+        if self.hparams1.is_omit_domain_weight is False:
             tgt_feature_here = torch.cat([tgt_feature_here, domain_weight], dim=-1)
-        if self.hparams.is_omit_logits is False:
+        if self.hparams1.is_omit_logits is False:
             tgt_feature_here = torch.cat([tgt_feature_here, expert_logits], dim=-1)
         final_weight = self.ins_weight(tgt_feature_here)
-        if self.hparams.is_sigmoid_weight:
+        if self.hparams1.is_sigmoid_weight:
             final_weight = torch.sigmoid(final_weight)
 
         return torch.mean(final_weight * expert_logits, dim=1), final_weight
@@ -92,23 +93,25 @@ domain_map = {"gossip":0,"politi":1, "health_deterrent":2}
 class MDAWS(SimpleTrainer):
     def __init__(self, hparams, textClf_ckpt=None):
         super(MDAWS, self).__init__(hparams)
-        self.hparams = hparams
+        self.automatic_optimization = False
+        self.save_hyperparameters()
         self.domain_adv = DomainClf(hparams)
+        self.hparams1 = hparams
         self.pre_train_epochs = hparams.pre_train_epochs
         self.TextClf = TextClf(hparams, model_name='cnn')
         self.hyper_lambda = hparams.hyper_lambda
-        self.class_count = self.hparams.class_count
+        self.class_count = 2
         # Multiple Expert
-        self.source_groups_count = len(self.hparams.src_domain.split(",")) + 1
-        self.classifiers = nn.Linear(self.hparams.hidden_size, self.class_count * self.source_groups_count)
-        self.is_group_weight = self.hparams.is_group_weight
+        self.source_groups_count = len(self.hparams1.src_domain.split(",")) + 1
+        self.classifiers = nn.Linear(self.hparams1.hidden_size, self.class_count * self.source_groups_count)
+        self.is_group_weight = self.hparams1.is_group_weight
 
-        if self.hparams.is_group_weight:
+        if self.hparams1.is_group_weight:
             self.group_weight = SimpleGroupWeight(n_groups=self.source_groups_count)
         else:
-            tgt_domain = domain_map[self.hparams.tgt_domain]
-            self.group_weight = FullWeightModel(hparams, n_groups=self.source_groups_count, hidden_size=self.hparams.hidden_size,
-                                                cls_emb=self.hparams.cls_emb, gw_hidden_dim=self.hparams.gw_hidden_dim, tgt_domain=tgt_domain)
+            tgt_domain = domain_map[self.hparams1.tgt_domain]
+            self.group_weight = FullWeightModel(hparams, n_groups=self.source_groups_count, hidden_size=self.hparams1.hidden_size,
+                                                cls_emb=self.hparams1.cls_emb, gw_hidden_dim=self.hparams1.gw_hidden_dim, tgt_domain=tgt_domain)
 
         self.cross_entropy_loss = nn.CrossEntropyLoss()
         self.nll_loss = nn.NLLLoss()
@@ -155,7 +158,7 @@ class MDAWS(SimpleTrainer):
         # binary classification
         src_logits = src_logits.view(-1, self.source_groups_count, self.class_count)
         # convert the domain_y into one hot
-        src_domain_onehot = src_feature.new_zeros(src_feature.shape[0], self.hparams.domain_class)
+        src_domain_onehot = src_feature.new_zeros(src_feature.shape[0], self.hparams1.domain_class)
         src_domain_onehot.zero_()
         if len(src_domain_y.shape) != 2:
             src_domain_y1 = src_domain_y.unsqueeze(1)
@@ -180,7 +183,7 @@ class MDAWS(SimpleTrainer):
 
         expert_logits = self.classifiers(tgt_feature)
         expert_logits = expert_logits.view(-1, self.source_groups_count, self.class_count)
-        tgt_domain_onehot = tgt_feature.new_ones(tgt_feature.shape[0], self.hparams.domain_class)
+        tgt_domain_onehot = tgt_feature.new_ones(tgt_feature.shape[0], self.hparams1.domain_class)
         if len(src_domain_y.shape) != 2:
             tgt_domain_y1 = tgt_domain_y.unsqueeze(1)
         else:
@@ -192,7 +195,7 @@ class MDAWS(SimpleTrainer):
         if self.is_group_weight:
             mix_logits = self.group_weight(expert_logits)
         else:
-            if self.hparams.is_weight_avg:
+            if self.hparams1.is_weight_avg:
                 mix_logits = torch.mean(expert_logits, dim=1)
             else:
 
@@ -200,11 +203,11 @@ class MDAWS(SimpleTrainer):
 
 
         loss = self.cross_entropy_loss(mix_logits, tgt_rumor_y)
-        loss_first = self.hparams.hyper_beta * loss_first
+        loss_first = self.hparams1.hyper_beta * loss_first
         # lambda
         # loss_first
         # + loss_first
-        if hasattr(self.hparams, "is_only_weak") and self.hparams.is_only_weak:
+        if hasattr(self.hparams1, "is_only_weak") and self.hparams1.is_only_weak:
             loss = loss
         else:
             loss = loss + loss_first
@@ -219,7 +222,7 @@ class MDAWS(SimpleTrainer):
                   "tgt_no_rumor_y": batch[6], 'tgt_no_x': batch[8], 'tgt_no_domain_y': batch[7],
                   }
         (opt_expert, opt_weight) = self.optimizers()
-        if self.current_epoch < self.hparams.pre_train_epochs:
+        if self.current_epoch < self.hparams1.pre_train_epochs:
             # first stage
             loss = self.first_stage(src_x=inputs['src_x'], src_domain_y=inputs['src_domain_y'],
                              src_rumor_y=inputs['src_rumor_y'], tgt_x=inputs['tgt_no_x'],
@@ -244,7 +247,7 @@ class MDAWS(SimpleTrainer):
 
 
     def training_epoch_end(self, outputs):
-        loss = np.mean([i['loss'].item() for i in outputs[0]])
+        loss = np.mean([i['loss'].item() for i in outputs])
         # loss_s = np.mean([i['log']['loss_s'].item() for i in outputs])
         # loss_g = np.mean([i['log']['loss_g'].item() for i in outputs])
         # instance_weight_list = np.concatenate([i['instance_weight'].detach().cpu().numpy() for i in outputs[0]])
@@ -261,7 +264,7 @@ class MDAWS(SimpleTrainer):
         inputs = {"src_rumor_y": batch[0], "src_domain_y":batch[1], "src_x": batch[2],
                   'tgt_rumor_y':batch[3], 'tgt_domain_y':batch[4],'tgt_x':batch[5]}
         g_input = {"y": batch[3], 'x': batch[5], "domain_y": batch[4]}
-        if self.current_epoch < self.hparams.pre_train_epochs:
+        if self.current_epoch < self.hparams1.pre_train_epochs:
             # first stage
             output = self.first_stage(src_x=inputs['src_x'], src_domain_y=inputs['src_domain_y'],
                                     src_rumor_y=inputs['src_rumor_y'], tgt_x=inputs['tgt_x'],
@@ -324,7 +327,7 @@ class MDAWS(SimpleTrainer):
         ret, predictions, targets, expert_weight,logits = self.test_eval_end(outputs)
         logs = ret["log"]
         for key, value in logs.items():
-            # self.logger.experiment.add_scalar("Test/" + key + "_s:{}-t:{}".format(self.hparams.src_domain, self.hparams.tgt_domain),
+            # self.logger.experiment.add_scalar("Test/" + key + "_s:{}-t:{}".format(self.hparams1.src_domain, self.hparams1.tgt_domain),
             self.logger.experiment.add_scalar("Test/" + key,
                                               value, self.current_epoch)
         torch.save(expert_weight, self.logger.experiment.log_dir+"/weight.torch")
@@ -333,28 +336,28 @@ class MDAWS(SimpleTrainer):
 
 
     def get_loader(self, type,flag=True):
-        batch_size = self.hparams.train_batch_size
+        batch_size = self.hparams1.train_batch_size
         selected_dataset = self.get_dataset(type, flag)
         dataloader = torch.utils.data.DataLoader(selected_dataset, batch_size=batch_size)
         return dataloader
 
 
     def on_train_start(self):
-        pl.seed_everything(self.hparams.random_seed)
+        pl.seed_everything(self.hparams1.random_seed)
 
     def get_dataset(self, type, flag):
-        if self.hparams.dataset == "text":
-            if self.hparams.is_eann:
+        if self.hparams1.dataset == "text":
+            if self.hparams1.is_eann:
                 dataset = EANNTextDataset
             else:
                 dataset = AdvTextDataset
-        elif self.hparams.dataset == "comment":
+        elif self.hparams1.dataset == "comment":
             dataset = CommenetDataset
         else:
             raise NotImplementedError
 
 
-        selected_dataset = dataset(self.hparams, type, weak_flag=flag, tokenizer=None)
+        selected_dataset = dataset(self.hparams1, type, weak_flag=flag, tokenizer=None)
         return selected_dataset
 
     def configure_optimizers(self):
@@ -365,24 +368,24 @@ class MDAWS(SimpleTrainer):
         main_optimizer = \
             torch.optim.Adam(filter(lambda p: p.requires_grad, chain(model.parameters(),
                                                                      domain_adv.parameters(), classifier.parameters())),
-                             lr=self.hparams.lr_rate
+                             lr=self.hparams1.lr_rate
                              )
 
         group_optimizer = torch.optim.Adam(
             [{"params": filter(lambda p: p.requires_grad, chain(model.parameters(),
                                                     domain_adv.parameters(), classifier.parameters())),
-              "lr":self.hparams.main_lr_rate, "weight_decay": self.hparams.weight_decay
+              "lr":self.hparams1.main_lr_rate, "weight_decay": self.hparams1.weight_decay
               },
              {"params": filter(lambda p: p.requires_grad, group_weight.parameters())}
              ],
 
-            lr=self.hparams.group_lr_rate
+            lr=self.hparams1.group_lr_rate
         )
 
         return [main_optimizer, group_optimizer]
 
     def train_dataloader(self):
-        flag = self.current_epoch < self.hparams.pre_train_epochs
+        flag = self.current_epoch < self.hparams1.pre_train_epochs
         dataloader = self.get_loader(type="train", flag=flag)
         return dataloader
 
@@ -416,7 +419,7 @@ class MDAWS(SimpleTrainer):
         parser.add_argument("--weak_fn", default="swear", type=str)
         parser.add_argument("--weak_label_count", default=30, type=int)
         parser.add_argument("--is_debug", action="store_true")
-
+        parser.add_argument('--hyper_lambda', type=float, default=0.5)
 
         return parser
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="buzz2" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="buzz2">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/MDA-WS" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
